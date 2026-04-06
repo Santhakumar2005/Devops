@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # VEHICLE SERVICE MANAGEMENT
 ![developer](https://img.shields.io/badge/Developed%20By%20%3A-Sumit%20Kumar-red)
 ---
@@ -98,3 +99,6 @@ This project is developed for demo purpose and it's not supposed to be used in r
 Any suggestion and feedback is welcome. You can message me on facebook
 - [Contact on Facebook](https://fb.com/sumit.luv)
 - [Subscribe my Channel LazyCoder On Youtube](https://youtube.com/lazycoders)
+=======
+# Devops
+>>>>>>> 78eede257001f04206ec89ff03f43d9706ebd787
