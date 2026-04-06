@@ -6,6 +6,8 @@ from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.conf import settings
 from django.db.models import Q
+from django.db.models import Q, Sum
+from . import models
 
 def home_view(request):
     if request.user.is_authenticated:
@@ -490,20 +492,34 @@ def admin_feedback_view(request):
 @login_required(login_url='customerlogin')
 @user_passes_test(is_customer)
 def customer_dashboard_view(request):
-    customer=models.Customer.objects.get(user_id=request.user.id)
-    work_in_progress=models.Request.objects.all().filter(customer_id=customer.id,status='Repairing').count()
-    work_completed=models.Request.objects.all().filter(customer_id=customer.id).filter(Q(status="Repairing Done") | Q(status="Released")).count()
-    new_request_made=models.Request.objects.all().filter(customer_id=customer.id).filter(Q(status="Pending") | Q(status="Approved")).count()
-    bill=models.Request.objects.all().filter(customer_id=customer.id).filter(Q(status="Repairing Done") | Q(status="Released")).aggregate(Sum('cost'))
-    print(bill)
-    dict={
-    'work_in_progress':work_in_progress,
-    'work_completed':work_completed,
-    'new_request_made':new_request_made,
-    'bill':bill['cost__sum'],
-    'customer':customer,
+    # Get customer linked to the logged-in user
+    customer = models.Customer.objects.get(user_id=request.user.id)
+
+    # Count requests by status
+    work_in_progress = models.Request.objects.filter(customer_id=customer.id, status='Repairing').count()
+    work_completed = models.Request.objects.filter(customer_id=customer.id).filter(
+        Q(status="Repairing Done") | Q(status="Released")
+    ).count()
+    new_request_made = models.Request.objects.filter(customer_id=customer.id).filter(
+        Q(status="Pending") | Q(status="Approved")
+    ).count()
+
+    # Calculate total bill (sum of costs of completed/released requests)
+    bill_aggregate = models.Request.objects.filter(customer_id=customer.id).filter(
+        Q(status="Repairing Done") | Q(status="Released")
+    ).aggregate(total_cost=Sum('cost'))
+
+    total_bill = bill_aggregate['total_cost'] or 0  # default to 0 if None
+
+    context = {
+        'work_in_progress': work_in_progress,
+        'work_completed': work_completed,
+        'new_request_made': new_request_made,
+        'bill': total_bill,
+        'customer': customer,
     }
-    return render(request,'vehicle/customer_dashboard.html',context=dict)
+
+    return render(request, 'vehicle/customer_dashboard.html', context=context)
 
 
 @login_required(login_url='customerlogin')
